@@ -1,4 +1,4 @@
-# nodox
+# nodox-cli
 
 [![npm version](https://img.shields.io/npm/v/nodox-cli)](https://www.npmjs.com/package/nodox-cli)
 [![npm downloads](https://img.shields.io/npm/dw/nodox-cli)](https://www.npmjs.com/package/nodox-cli)
@@ -6,9 +6,9 @@
 
 **API documentation that works the moment you run your server — no annotations, no YAML, no setup.**
 
-<!-- DEMO GIF: replace this line with: ![nodox demo](./demo.gif) -->
+<!-- DEMO GIF: replace this line with: ![nodox-cli demo](./demo.gif) -->
 
-nodox is an Express middleware that automatically discovers every route in your app, detects request/response schemas using a 5-layer pipeline, and serves a live interactive docs UI at `/__nodox`. Think FastAPI's `/docs`, but for Node.js — the first time you see it, your entire API is already there.
+nodox-cli is an Express middleware that automatically discovers every route in your app, detects request/response schemas using a 5-layer pipeline, and serves a live interactive docs UI at `/__nodox`. Think FastAPI's `/docs`, but for Node.js — the first time you see it, your entire API is already there.
 
 ```bash
 npm install nodox-cli
@@ -16,13 +16,13 @@ npm install nodox-cli
 
 ---
 
-## Why nodox
+## Why nodox-cli
 
 Annotation-based tools start empty — you get a blank UI and a checklist of work: annotate this route, write this YAML block, run this code generator. Traffic-based tools show routes but leave them schema-less until you hit every endpoint manually. Either way, the documentation is a separate project you maintain alongside your actual code.
 
-nodox is different. Add one line and your existing routes are immediately documented — with detected schemas, an interactive playground, and live schema updates as real requests flow through.
+nodox-cli is different. Add one line and your existing routes are immediately documented — with detected schemas, an interactive playground, and live schema updates as real requests flow through.
 
-| | nodox | express-oas-generator | swagger-jsdoc | tsoa | Postman |
+| | nodox-cli | express-oas-generator | swagger-jsdoc | tsoa | Postman |
 |---|---|---|---|---|---|
 | Setup | One middleware line | Two middleware placements (before + after routes) | Config file + point to routes | TypeScript decorators + codegen step | Manual collection or CLI generator |
 | Annotate every route? | No | No | Yes (`@swagger` JSDoc) | Yes (class decorators) | No (but no Express integration) |
@@ -63,11 +63,11 @@ Passing `app` explicitly enables Layer 2 source screening immediately at startup
 
 ---
 
-> **Nothing below requires any code changes.** nodox detects schema from your existing handlers automatically — no annotations, no wrappers, no extra setup. `validate()` is covered later in this README as a purely optional enhancement. You can skip it entirely and still get full documentation for every route.
+> **Nothing below requires any code changes.** nodox-cli detects schema from your existing handlers automatically — no annotations, no wrappers, no extra setup. `validate()` is covered later in this README as a purely optional enhancement. You can skip it entirely and still get full documentation for every route.
 
 ## How schema detection works
 
-nodox uses a **5-layer pipeline** to detect request/response schemas. Layers run in priority order — a higher-confidence result is never overwritten by a lower one.
+nodox-cli uses a **5-layer pipeline** to detect request/response schemas. Layers run in priority order — a higher-confidence result is never overwritten by a lower one.
 
 | Layer | Source | What it does |
 |---|---|---|
@@ -77,7 +77,7 @@ nodox uses a **5-layer pipeline** to detect request/response schemas. Layers run
 | 4 | Test suite recording (`.apicache.json`) | Loads shapes recorded from your real test suite |
 | 5 | Live `res.json()` interception | Intercepts actual responses as they happen in development |
 
-**express-validator** chains are detected automatically in Layer 2 — no wrapper needed. If your routes use `check()`, `body()`, or `param()` validation chains, nodox extracts field names and detects types directly from the validator names (`isEmail`, `isInt`, `isUUID`, etc.).
+**express-validator** chains are detected automatically in Layer 2 — no wrapper needed. If your routes use `check()`, `body()`, or `param()` validation chains, nodox-cli extracts field names and detects types directly from the validator names (`isEmail`, `isInt`, `isUUID`, etc.).
 
 **Layers 2–5 run entirely on their own.** You don't write a single extra line for them — they work against your existing code as-is. Layer 1 (`validate()`) is there if you ever want to go further, but it is never required. If you never touch it, the other four layers still run and your entire API is still documented.
 
@@ -89,7 +89,7 @@ One honest caveat: if a handler has **no validation logic at all** (no Zod, Joi,
 
 ## A note on validate()
 
-nodox is built on the assumption that most users will never touch `validate()` at all.
+nodox-cli is built on the assumption that most users will never touch `validate()` at all.
 
 The entire detection pipeline — source scanning, dry-runs, test recording, live interception — exists specifically so that your existing, unmodified codebase gets full documentation without any extra work. That is the core promise: no annotations, no changes to your handlers, no manual anything.
 
@@ -99,7 +99,7 @@ The entire detection pipeline — source scanning, dry-runs, test recording, liv
 
 ## Explicit schema with validate() (optional)
 
-Wrap a handler with `validate()` to attach a confirmed schema to a route. nodox reads it at Layer 1 and marks those fields as confirmed in the UI. It also validates `req.body` at runtime — returning a structured `400` on failure, or passing the parsed and coerced value to the next handler on success.
+Wrap a handler with `validate()` to attach a confirmed schema to a route. nodox-cli reads it at Layer 1 and marks those fields as confirmed in the UI. It also validates `req.body` at runtime — returning a structured `400` on failure, or passing the parsed and coerced value to the next handler on success.
 
 Define your schema once, then pass it to `validate()` as a middleware:
 
@@ -165,7 +165,7 @@ npx nodox init    # injects nodox-cli/jest-setup into your Jest/Vitest config
 
 Recorded shapes are stored in `.apicache.json` and loaded on the next server start. This is Layer 4 — shapes observed from real test data, not synthesized. The cache stores the number of times each route was seen and when it was last recorded, and merges new observations into existing entries rather than overwriting them.
 
-nodox searches for `.apicache.json` upward from your working directory (up to 5 levels), so monorepo setups with a cache at the workspace root are supported without any path configuration.
+nodox-cli searches for `.apicache.json` upward from your working directory (up to 5 levels), so monorepo setups with a cache at the workspace root are supported without any path configuration.
 
 Run `npx nodox prune` to reset the cache.
 
@@ -195,7 +195,7 @@ The **Chain** tab lets you wire routes together into a multi-step flow and execu
 
 Click **▶ Simulate** (top-right of the canvas) to open the simulation panel, then **▶ Run all**.
 
-Steps execute in dependency order (topological sort). Each step shows its HTTP status and the full response body once complete.
+Steps execute in dependency order (topological sort). Each step shows its HTTP status and the full response body once complete. Use **Clear** to reset all outputs while keeping your inputs, so you can tweak values and rerun without rebuilding the canvas.
 
 ### Passing data between steps — `{{stepN.field}}`
 
@@ -205,6 +205,7 @@ Use `{{stepN.field}}` in any input field to splice a value from a previous step'
 {{step0.id}}          → top-level field "id" from step 0's response
 {{step0.user.email}}  → nested field
 {{step1.token}}       → field from step 1's response
+{{step0.0.name}}      → first item of an array response, then "name"
 ```
 
 **Example flow — create a user, then fetch it:**
@@ -214,7 +215,7 @@ Use `{{stepN.field}}` in any input field to splice a value from a previous step'
 | 0 | `POST /users` | `{ "name": "Alice", "email": "alice@example.com" }` |
 | 1 | `GET /users/:id` | `:id` → `{{step0.id}}` |
 
-After step 0 responds with `{ "id": 42, "name": "Alice" }`, nodox replaces `{{step0.id}}` with `42` before firing the step 1 request — no copy-pasting required.
+After step 0 responds with `{ "id": 42, "name": "Alice" }`, nodox-cli replaces `{{step0.id}}` with `42` before firing the step 1 request — no copy-pasting required.
 
 **Interpolation works everywhere in a step's inputs:**
 
@@ -238,7 +239,7 @@ app.use(nodox(app, {
 }))
 ```
 
-nodox is a **no-op in production** by default (`NODE_ENV=production`). Pass `force: true` to override — but do not expose `/__nodox` publicly, as it reveals all routes, detected schemas, and a full request playground.
+nodox-cli is a **no-op in production** by default (`NODE_ENV=production`). Pass `force: true` to override — but do not expose `/__nodox` publicly, as it reveals all routes, detected schemas, and a full request playground.
 
 ---
 
@@ -263,7 +264,7 @@ import type { NodoxOptions, ValidateOptions } from 'nodox-cli'
 
 `NodoxOptions` covers all middleware options. `ValidateOptions` covers the `strict` and `response` options accepted by `validate()`.
 
-Both Zod v3 and Zod v4 are supported. nodox uses different patching strategies for each (prototype-level for v3, per-instance for v4) and detects the installed version automatically.
+Both Zod v3 and Zod v4 are supported. nodox-cli uses different patching strategies for each (prototype-level for v3, per-instance for v4) and detects the installed version automatically.
 
 ---
 
