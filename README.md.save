@@ -6,6 +6,7 @@
 
 **API documentation that works the moment you run your server — no annotations, no YAML, no setup.**
 
+
 nodox-cli is an Express middleware that automatically discovers every route in your app, detects request/response schemas using a 5-layer pipeline, and serves a live interactive docs UI at `/__nodox`. Think FastAPI's `/docs`, but for Node.js — the first time you see it, your entire API is already there.
 
 ```bash
@@ -120,7 +121,6 @@ app.post('/users', validate(CreateUserSchema), async (req, res) => {
 `validate()` accepts **Zod**, **Joi**, **yup**, and plain **JSON Schema** objects:
 
 ```js
-// Joi
 import Joi from 'joi'
 
 const LoginSchema = Joi.object({
@@ -129,52 +129,6 @@ const LoginSchema = Joi.object({
 })
 
 app.post('/login', validate(LoginSchema), handler)
-```
-
-```js
-// yup
-import * as yup from 'yup'
-
-const ProductSchema = yup.object({
-  name:    yup.string().required(),
-  price:   yup.number().positive().required(),
-  inStock: yup.boolean().default(true),
-})
-
-app.post('/products', validate(ProductSchema), (req, res) => {
-  res.status(201).json(req.body)
-})
-```
-
-```js
-// Plain JSON Schema — displayed in UI but does not perform runtime validation
-// Use Zod/Joi/yup if you need the 400 rejection behaviour
-import { validate } from 'nodox-cli'
-
-const OrderSchema = {
-  type: 'object',
-  properties: {
-    productId: { type: 'string' },
-    quantity:  { type: 'integer', minimum: 1 },
-  },
-  required: ['productId', 'quantity'],
-}
-
-app.post('/orders', validate(OrderSchema), (req, res) => {
-  res.status(201).json({ orderId: 'ord_123', ...req.body })
-})
-```
-
-**Validation error response format** (Zod/Joi/yup — returned automatically on failure):
-
-```json
-{
-  "error": "Validation failed",
-  "details": [
-    { "path": "name",  "message": "Required",       "code": "invalid_type" },
-    { "path": "email", "message": "Invalid email",  "code": "invalid_string" }
-  ]
-}
 ```
 
 ### Document the response schema
@@ -223,17 +177,6 @@ Run `npx nodox prune` to reset the cache.
 - **Chain builder** — connect routes on a canvas, wire output fields to input fields, and simulate multi-step flows with `{{step0.fieldName}}` interpolation
 - **Environment switcher** — swap the base URL between local, staging, and production without leaving the UI
 - **Response diff** — save a baseline response and compare it against subsequent calls to catch regressions
-
-### Schema confidence levels
-
-Every field in the UI is marked with a badge showing how nodox got its schema:
-
-| Badge | How it got there |
-|---|---|
-| **confirmed** | You used `validate()` explicitly |
-| **inferred** | nodox dry-ran your handler or read express-validator chains |
-| **observed** | nodox watched real traffic or loaded from `.apicache.json` |
-| *(none)* | Route has no data yet |
 
 ---
 
@@ -304,64 +247,8 @@ nodox-cli is a **no-op in production** by default (`NODE_ENV=production`). Pass 
 ```bash
 npx nodox init    # set up test suite integration (Jest or Vitest); updates .gitignore
 npx nodox prune   # clear .apicache.json
-npx nodox status  # print route count and schema coverage per route
+npx nodox status  # print route count and schema coverage
 ```
-
-`npx nodox status` output example:
-
-```
-◆ nodox status
-
-  Routes tracked: 6
-  Schema coverage:
-
-  GET  /users          confirmed  (validate)
-  POST /users          confirmed  (validate)
-  GET  /users/:id      inferred   (dry-run)
-  PUT  /users/:id      observed   (traffic)
-  DELETE /users/:id    observed   (traffic)
-  GET  /health         —          (no data yet)
-```
-
----
-
-## Full control — you decide how much nodox does
-
-nodox works in three modes depending on how much control you want:
-
-**Mode 1 — Zero config (fully automatic)**
-Add one line. nodox handles everything. No other changes.
-
-```js
-app.use(nodox(app))
-```
-
-**Mode 2 — Selective validation**
-Keep zero-config for most routes. Use `validate()` only on the routes where you want confirmed schemas and runtime validation.
-
-```js
-app.use(nodox(app))
-
-app.get('/users', handler)                                    // auto-detected
-app.post('/users', validate(CreateUserSchema), handler)       // confirmed + validated
-app.get('/users/:id', handler)                                // auto-detected
-app.delete('/users/:id', validate(IdSchema), handler)         // confirmed + validated
-```
-
-**Mode 3 — Full manual control**
-Use `validate()` on every route with both request and response schemas. Every field is confirmed. Nothing is inferred.
-
-```js
-app.use(nodox(app, { schema: false, intercept: false }))  // disable auto-detection
-
-app.post(
-  '/users',
-  validate(CreateUserSchema, { response: UserResponse, strict: true }),
-  handler
-)
-```
-
-You pick the mode. You can mix and match per route. nodox never forces you into a pattern.
 
 ---
 
